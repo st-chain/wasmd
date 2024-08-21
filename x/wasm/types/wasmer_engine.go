@@ -105,6 +105,26 @@ type WasmEngine interface {
 		deserCost wasmvmtypes.UFraction,
 	) (*wasmvmtypes.ContractResult, uint64, error)
 
+	// TODO tkulik: Update the description
+	// Migrate will migrate an existing contract to a new code binary.
+	// This takes storage of the data from the original contract and the CodeID of the new contract that should
+	// replace it. This allows it to run a migration step if needed, or return an error if unable to migrate
+	// the given data.
+	//
+	// MigrateMsg has some data on how to perform the migration.
+	Migrate2(
+		checksum wasmvm.Checksum,
+		env wasmvmtypes.Env,
+		migrateMsg []byte,
+		migrateInfo wasmvmtypes.MigrateInfo,
+		store wasmvm.KVStore,
+		goapi wasmvm.GoAPI,
+		querier wasmvm.Querier,
+		gasMeter wasmvm.GasMeter,
+		gasLimit uint64,
+		deserCost wasmvmtypes.UFraction,
+	) (*wasmvmtypes.ContractResult, uint64, error)
+
 	// Sudo runs an existing contract in read/write mode (like Execute), but is never exposed to external callers
 	// (either transactions or government proposals), but can only be called by other native Go modules directly.
 	//

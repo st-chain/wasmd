@@ -466,6 +466,8 @@ func (k Keeper) migrate(
 	}
 
 	// check for IBC flag
+
+	// TODO tkulik: Here we call AnalyzeCode:
 	report, err := k.wasmVM.AnalyzeCode(newCodeInfo.CodeHash)
 	switch {
 	case err != nil:
@@ -565,7 +567,20 @@ func (k Keeper) callMigrateEntrypoint(
 	prefixStoreKey := types.GetContractStorePrefix(contractAddress)
 	vmStore := types.NewStoreAdapter(prefix.NewStore(runtime.KVStoreAdapter(k.storeService.OpenKVStore(sdkCtx)), prefixStoreKey))
 	gasLeft := k.runtimeGasForContract(sdkCtx)
-	res, gasUsed, err := k.wasmVM.Migrate(newChecksum, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
+
+	// TODO tkulik:
+	// migrateInfo := wasmvmtypes.MigrateInfo{
+	// 	Sender: ,
+	// 	OldStateVersion:
+	// }
+	migrateInfo := wasmvmtypes.MigrateInfo{}
+	res, gasUsed, err := k.wasmVM.Migrate2(newChecksum, env, msg, migrateInfo, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
+	if err != nil {
+		if strings.Contains(err.Error(), "The called function args arity mismatch, expected 2 args") {
+			res, gasUsed, err = k.wasmVM.Migrate(newChecksum, env, msg, vmStore, cosmwasmAPI, &querier, k.gasMeter(sdkCtx), gasLeft, costJSONDeserialization)
+		}
+	}
+
 	k.consumeRuntimeGas(sdkCtx, gasUsed)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrVMError, err.Error())
